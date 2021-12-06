@@ -1,2 +1,0 @@
-FLASK_APP=bbs
-FLASK_ENV=development
