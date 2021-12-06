@@ -12,7 +12,6 @@ from bbs.extensions import db
 import datetime
 from flask_login import UserMixin, current_user
 import os
-from sqlalchemy_serializer import SerializerMixin
 
 
 class BlockUser(db.Model):
@@ -72,7 +71,7 @@ class Follow(db.Model):
     followed = db.relationship('User', foreign_keys=[followed_id], back_populates='followers', lazy='joined')
 
 
-class User(db.Model, UserMixin, SerializerMixin):
+class User(db.Model, UserMixin):
     __tablename__ = 't_user'
 
     id = db.Column(db.INTEGER, primary_key=True, nullable=False, index=True, autoincrement=True)
@@ -135,6 +134,12 @@ class User(db.Model, UserMixin, SerializerMixin):
     block_user = db.relationship('BlockUser', back_populates='user', foreign_keys=[BlockUser.user_id])
     # 被block的用户
     blocked_user = db.relationship('BlockUser', back_populates='block_user', foreign_keys=[BlockUser.block_user_id])
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+    def child(self):
+        pass
 
     def set_password(self, pwd):
         self.password = generate_password_hash(pwd)
