@@ -9,11 +9,15 @@
 """
 from flask import Flask
 from app.extensions import db, login_manager
+from app.setting import DevelopmentConfig, ProductionConfig
 
 
-def create_app():
+def create_app(config_name=None):
     app = Flask('bbs-admin-backend')
-
+    if not config_name:
+        app.config.from_object(DevelopmentConfig)
+    else:
+        app.config.from_object(ProductionConfig)
     return app
 
 
