@@ -8,23 +8,27 @@
 @Software: PyCharm
 """
 from flask import Flask
-from app.extensions import db, login_manager
-from app.setting import DevelopmentConfig, ProductionConfig
+from bbs.extensions import db
+from bbs.setting import DevelopmentConfig, ProductionConfig
+from bbs.api.user import user_bp
+from bbs.models import *
 
 
 def create_app(config_name=None):
-    app = Flask('bbs-admin-backend')
+    app = Flask('bbs')
     if not config_name:
         app.config.from_object(DevelopmentConfig)
     else:
         app.config.from_object(ProductionConfig)
+    register_ext(app)
+    register_bp(app)
     return app
 
 
 def register_ext(app: Flask):
     db.init_app(app)
-    login_manager.init_app(app)
 
 
-def register_bp():
-    pass
+def register_bp(app: Flask):
+    app.register_blueprint(user_bp)
+

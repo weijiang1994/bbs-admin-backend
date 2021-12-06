@@ -8,8 +8,7 @@
 @Software: PyCharm
 """
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_avatars import Identicon
-from app.extensions import db, whooshee
+from bbs.extensions import db
 import datetime
 from flask_login import UserMixin, current_user
 import os
@@ -73,7 +72,6 @@ class Follow(db.Model):
     followed = db.relationship('User', foreign_keys=[followed_id], back_populates='followers', lazy='joined')
 
 
-@whooshee.register_model('username', 'nickname')
 class User(db.Model, UserMixin, SerializerMixin):
     __tablename__ = 't_user'
 
@@ -143,11 +141,6 @@ class User(db.Model, UserMixin, SerializerMixin):
 
     def check_password(self, pwd):
         return check_password_hash(self.password, pwd)
-
-    def generate_avatar(self):
-        icon = Identicon()
-        files = icon.generate(self.username)
-        self.avatar = '/normal/image/avatars/' + files[2]
 
     def get_permission(self):
         return self.role.permission.name
@@ -229,7 +222,6 @@ class PostCategory(db.Model):
                                          UserInterest.cate_id == self.id).first()
 
 
-@whooshee.register_model('title', 'content')
 class Post(db.Model):
     __tablename__ = 't_post'
 
