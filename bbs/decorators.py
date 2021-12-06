@@ -8,6 +8,7 @@
 @Software: PyCharm
 """
 from flask import request, jsonify
+from bbs.utils import logger
 
 
 def track_error(func):
