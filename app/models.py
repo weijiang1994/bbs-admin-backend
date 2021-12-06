@@ -13,6 +13,7 @@ from app.extensions import db, whooshee
 import datetime
 from flask_login import UserMixin, current_user
 import os
+from sqlalchemy_serializer import SerializerMixin
 
 
 class BlockUser(db.Model):
@@ -73,7 +74,7 @@ class Follow(db.Model):
 
 
 @whooshee.register_model('username', 'nickname')
-class User(db.Model, UserMixin):
+class User(db.Model, UserMixin, SerializerMixin):
     __tablename__ = 't_user'
 
     id = db.Column(db.INTEGER, primary_key=True, nullable=False, index=True, autoincrement=True)
