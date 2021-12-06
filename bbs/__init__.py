@@ -16,7 +16,7 @@ from bbs.models import *
 
 def create_app(config_name=None):
     app = Flask('bbs')
-    if not config_name:
+    if config_name is None:
         app.config.from_object(DevelopmentConfig)
     else:
         app.config.from_object(ProductionConfig)
