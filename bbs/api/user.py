@@ -9,11 +9,12 @@
 """
 from flask import Blueprint, jsonify, request
 from bbs.models import User
-
+from bbs.decorators import check_json
 user_bp = Blueprint('user', __name__, url_prefix='/user')
 
 
 @user_bp.route('/get-user', methods=['GET'])
+@check_json
 def get_user():
     page = request.json.get('page')
     limit = request.json.get('limit')
