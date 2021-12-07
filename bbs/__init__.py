@@ -8,9 +8,10 @@
 @Software: PyCharm
 """
 from flask import Flask
-from bbs.extensions import db
+from bbs.extensions import db, jwt
 from bbs.setting import DevelopmentConfig, ProductionConfig, basedir
 from bbs.api.user import user_bp
+from bbs.api.auth import auth_bp
 from bbs.models import *
 import logging
 from logging.handlers import RotatingFileHandler
@@ -30,10 +31,12 @@ def create_app(config_name=None):
 
 def register_ext(app: Flask):
     db.init_app(app)
+    jwt.init_app(app)
 
 
 def register_bp(app: Flask):
     app.register_blueprint(user_bp)
+    app.register_blueprint(auth_bp)
 
 
 def register_log(app: Flask):
