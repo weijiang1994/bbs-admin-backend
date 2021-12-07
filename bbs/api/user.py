@@ -20,7 +20,6 @@ def get_user():
     limit = request.json.get('limit')
     keyword = request.json.get('keyword')
     cate = request.json.get('cate')
-    1 / 0
     if cate and keyword:
         if cate == 'id':
             pagination = User.query.filter_by(id=keyword).paginate(page=page, per_page=limit)
