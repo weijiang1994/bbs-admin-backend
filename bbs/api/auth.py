@@ -10,7 +10,7 @@
 from flask import Blueprint, request, jsonify
 from bbs.decorators import check_json
 from bbs.models import User
-from flask_jwt_extended import create_access_token, current_user, jwt_required, get_jwt_identity, create_refresh_token,\
+from flask_jwt_extended import create_access_token, current_user, jwt_required, get_jwt_identity, create_refresh_token, \
     set_access_cookies, unset_access_cookies
 import datetime
 from bbs.extensions import jwt
@@ -76,7 +76,6 @@ def user_lookup_callback(_jwt_header, jwt_data):
 @auth_bp.route('/userinfo')
 @jwt_required()
 def user_info():
-
     return jsonify(
         id=current_user.id,
         username=current_user.username,
@@ -93,3 +92,6 @@ def logout():
     )
     unset_access_cookies(response)
     return response
+
+
+print()
