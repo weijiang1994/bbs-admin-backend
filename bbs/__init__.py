@@ -7,7 +7,7 @@
 @email   : qq804022023@gmail.com
 @Software: PyCharm
 """
-from flask import Flask
+from flask import Flask, jsonify
 from bbs.extensions import db, jwt
 from bbs.setting import DevelopmentConfig, ProductionConfig, basedir
 from bbs.api.user import user_bp
@@ -26,6 +26,32 @@ def create_app(config_name=None):
     register_ext(app)
     register_bp(app)
     register_log(app)
+
+    @jwt.expired_token_loader
+    def token_expired(jwt_header, jwt_payload):
+        """
+        token过期的回调函数
+        :param jwt_header: jwt token header
+        :param jwt_payload: jwt token payload
+        :return: 提示信息
+        """
+        return jsonify(
+            code=401,
+            msg='Token已经过期请重新登录！'
+        ), 401
+
+    @jwt.invalid_token_loader
+    def invalid_token(jwt_header):
+        """
+        token无效的回调函数
+        :param jwt_header: jwt token header
+        :return: 提示信息
+        """
+        return jsonify(
+            code=422,
+            msg='无效的Token!'
+        ), 422
+
     return app
 
 
