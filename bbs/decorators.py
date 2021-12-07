@@ -13,11 +13,19 @@ import os
 
 
 def track_error(func):
+    """
+    track running error
+    :param func: decorated function
+    :return: result
+    """
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            return jsonify({'code': 400, 'msg': 'Server Inter Error'})
+            return jsonify(
+                code=500,
+                msg='服务器内部错误！'
+            )
     return wrapper
 
 
@@ -30,7 +38,10 @@ def check_json(func):
 
     def wrapper(*args, **kwargs):
         if request.json is None or type(request.json) != dict:
-            return jsonify({'code': 422, 'msg': 'Unavailable request data.'})
+            return jsonify(
+                code=422,
+                msg='错误的请求数据格式！'
+            )
         return func(*args, **kwargs)
 
     return wrapper
