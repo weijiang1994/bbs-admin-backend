@@ -8,15 +8,39 @@
 @Software: PyCharm
 """
 import logging
+from logging.handlers import RotatingFileHandler
 from bbs.setting import basedir
 import os
 import datetime
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
 
-log_file = os.path.join(basedir, 'logs', datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
-fh = logging.FileHandler(log_file, mode='w')
-fh.setLevel(logging.DEBUG)
+def singleton(cls):
+    instances = {}
 
-formatter = logging.Formatter("%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s")
+    def inner(*args, **kwargs):
+        if cls not in instances:
+            instances[cls] = cls(*args, **kwargs)
+            return instances[cls]
+
+    return inner
+
+
+@singleton
+class LogUtil:
+    def __init__(self, log_name, log_path, max_size=2 * 1024 * 1024, backup_count=10):
+        self.logger = self.log_util(log_name, log_path, max_size, backup_count)
+
+    @staticmethod
+    def log_util(log_name, log_path, max_size=2 * 1024 * 1024, backup_count=10):
+        if not os.path.exists(log_path):
+            os.mkdir(log_path)
+        logger = logging.getLogger(log_name)
+        formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+        file_handler = RotatingFileHandler(log_path + '/' + log_name,
+                                           maxBytes=max_size,
+                                           backupCount=backup_count
+                                           )
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+        logger.setLevel(logging.DEBUG)
+        return logger

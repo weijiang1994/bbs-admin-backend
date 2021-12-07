@@ -9,9 +9,11 @@
 """
 from flask import Flask
 from bbs.extensions import db
-from bbs.setting import DevelopmentConfig, ProductionConfig
+from bbs.setting import DevelopmentConfig, ProductionConfig, basedir
 from bbs.api.user import user_bp
 from bbs.models import *
+import logging
+from logging.handlers import RotatingFileHandler
 
 
 def create_app(config_name=None):
@@ -22,6 +24,7 @@ def create_app(config_name=None):
         app.config.from_object(ProductionConfig)
     register_ext(app)
     register_bp(app)
+    register_log(app)
     return app
 
 
@@ -32,3 +35,12 @@ def register_ext(app: Flask):
 def register_bp(app: Flask):
     app.register_blueprint(user_bp)
 
+
+def register_log(app: Flask):
+    app.logger.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler = RotatingFileHandler(basedir + '/logs/bbs.log', maxBytes=10 * 1024 * 1024, backupCount=10)
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(logging.DEBUG)
+    if not app.debug:
+        app.logger.addHandler(file_handler)
