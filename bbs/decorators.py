@@ -8,20 +8,27 @@
 @Software: PyCharm
 """
 from flask import request, jsonify
-from bbs.utils import logger
+from bbs.setting import basedir
+import os
 
 
 def track_error(func):
+    """
+    track running error
+    :param func: decorated function
+    :return: result
+    """
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            pass
-
+            return jsonify(
+                code=500,
+                msg='服务器内部错误！'
+            )
     return wrapper
 
 
-@track_error
 def check_json(func):
     """
     Check whether the request data contains JSON
@@ -30,10 +37,11 @@ def check_json(func):
     """
 
     def wrapper(*args, **kwargs):
-        try:
-            request.json
-            return func(*args, **kwargs)
-        except Exception as e:
-            return jsonify({'code': 422, 'msg': 'Unavailable request data.'})
+        if request.json is None or type(request.json) != dict:
+            return jsonify(
+                code=422,
+                msg='错误的请求数据格式！'
+            )
+        return func(*args, **kwargs)
 
     return wrapper

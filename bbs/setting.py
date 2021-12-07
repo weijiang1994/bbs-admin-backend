@@ -8,6 +8,7 @@ file: setting.py
 import os
 from dotenv import load_dotenv
 import sys
+import datetime
 
 WIN = sys.platform.startswith('win')
 if WIN:
@@ -51,6 +52,14 @@ class BaseConfig(object):
 
     GITHUB_USERNAME = 'weijiang1994'
     GITHUB_REPO = 'university-bbs'
+
+    # jwt config
+    JWT_SECRET_KEY = 'a3e847bc-5707-11ec-9608-9f9d60f7ad70'
+    JWT_ACCESS_TOKEN_EXPIRES = datetime.timedelta(days=3)
+    JWT_TOKEN_LOCATION = ['cookies', 'headers', 'json', 'query_string']
+    JWT_HEADER_NAME = 'Access-Token'
+    JWT_ACCESS_COOKIE_NAME = 'Access-Token'
+    JWT_QUERY_STRING_NAME = 'access_token'
 
 
 class DevelopmentConfig(BaseConfig):
