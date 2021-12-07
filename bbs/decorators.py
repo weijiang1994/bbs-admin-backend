@@ -29,14 +29,8 @@ def check_json(func):
     """
 
     def wrapper(*args, **kwargs):
-        try:
-            request.json
-            return func(*args, **kwargs)
-        except Exception as e:
-            from flask import current_app
-            import traceback
-            traceback.print_exc()
-            current_app.logger.error('Error')
+        if request.json is None or type(request.json) != dict:
             return jsonify({'code': 422, 'msg': 'Unavailable request data.'})
+        return func(*args, **kwargs)
 
     return wrapper
