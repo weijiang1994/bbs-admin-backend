@@ -92,6 +92,3 @@ def logout():
     )
     unset_access_cookies(response)
     return response
-
-
-print()
