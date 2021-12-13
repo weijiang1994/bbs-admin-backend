@@ -18,7 +18,7 @@ from bbs.extensions import jwt
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
-@auth_bp.route('/login')
+@auth_bp.route('/login', methods=['POST'])
 @check_json
 def login():
     username = request.json.get('username')
@@ -27,26 +27,30 @@ def login():
     if not user:
         return jsonify(
             code=404,
-            msg='用户不存在！'
-        ), 404
+            msg='用户不存在！',
+            success=False
+        )
 
     if user.status.name == '禁用':
         return jsonify(
             code=403,
-            msg='用户已被禁用！'
-        ), 403
+            msg='用户已被禁用！',
+            success=False
+        )
 
     if not user.check_password(password):
         return jsonify(
             code=400,
-            msg='用户名或密码错误！'
-        ), 400
+            msg='用户名或密码错误！',
+            success=False
+        )
 
     if user.role_id != 1:
         return jsonify(
             code=403,
-            msg='非管理员禁止登录！'
-        ), 403
+            msg='非管理员禁止登录！',
+            success=False
+        )
 
     access_token = create_access_token(identity=user, additional_claims={'admin': True})
     response = jsonify(
@@ -56,7 +60,8 @@ def login():
         username=user.username,
         nickname=user.nickname,
         timestamp=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        access_token=access_token
+        access_token=access_token,
+        success=True
     )
     set_access_cookies(response, access_token)
     return response

@@ -8,7 +8,7 @@
 @Software: PyCharm
 """
 from flask import Flask, jsonify
-from bbs.extensions import db, jwt
+from bbs.extensions import db, jwt, cors
 from bbs.setting import DevelopmentConfig, ProductionConfig, basedir
 from bbs.api.user import user_bp
 from bbs.api.auth import auth_bp
@@ -36,9 +36,9 @@ def create_app(config_name=None):
         :return: 提示信息
         """
         return jsonify(
-            code=401,
+            code=4003,
             msg='Token已经过期请重新登录！'
-        ), 401
+        )
 
     @jwt.invalid_token_loader
     def invalid_token(jwt_header):
@@ -48,9 +48,9 @@ def create_app(config_name=None):
         :return: 提示信息
         """
         return jsonify(
-            code=422,
+            code=4003,
             msg='无效的Token!'
-        ), 422
+        )
 
     return app
 
@@ -58,6 +58,7 @@ def create_app(config_name=None):
 def register_ext(app: Flask):
     db.init_app(app)
     jwt.init_app(app)
+    cors.init_app(app)
 
 
 def register_bp(app: Flask):

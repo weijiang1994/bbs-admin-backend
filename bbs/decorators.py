@@ -41,7 +41,7 @@ def check_json(func):
             return jsonify(
                 code=422,
                 msg='错误的请求数据格式！'
-            )
+            ), 422
         return func(*args, **kwargs)
 
     return wrapper
