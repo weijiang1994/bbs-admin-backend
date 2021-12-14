@@ -14,6 +14,7 @@ from flask_jwt_extended import create_access_token, current_user, jwt_required, 
     set_access_cookies, unset_access_cookies
 import datetime
 from bbs.extensions import jwt
+from bbs.utils import conf
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -78,13 +79,14 @@ def user_lookup_callback(_jwt_header, jwt_data):
     return User.query.filter_by(id=identity).one_or_none()
 
 
-@auth_bp.route('/userinfo')
+@auth_bp.route('/userInfo')
 @jwt_required()
 def user_info():
     return jsonify(
         id=current_user.id,
         username=current_user.username,
-        nickname=current_user.nickname
+        nickname=current_user.nickname,
+        avatar=conf.get('frontend_url') + current_user.avatar
     ), 200
 
 

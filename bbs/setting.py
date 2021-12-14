@@ -55,7 +55,7 @@ class BaseConfig(object):
 
     # jwt config
     JWT_SECRET_KEY = 'a3e847bc-5707-11ec-9608-9f9d60f7ad70'
-    JWT_ACCESS_TOKEN_EXPIRES = datetime.timedelta(days=3)
+    JWT_ACCESS_TOKEN_EXPIRES = datetime.timedelta(hours=2)
     JWT_TOKEN_LOCATION = ['cookies', 'headers', 'json', 'query_string']
     JWT_HEADER_NAME = 'Access-Token'
     JWT_ACCESS_COOKIE_NAME = 'Access-Token'

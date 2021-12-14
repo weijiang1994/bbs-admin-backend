@@ -12,6 +12,11 @@ from logging.handlers import RotatingFileHandler
 from bbs.setting import basedir
 import os
 import datetime
+import yaml
+
+yaml_file = basedir + '/resources/conf.yaml'
+fs = open(yaml_file, encoding='utf8')
+conf = yaml.load(fs, Loader=yaml.FullLoader)
 
 
 def singleton(cls):
