@@ -10,15 +10,16 @@
 from flask import Blueprint, request, jsonify
 from bbs.decorators import check_json
 from bbs.models import User
-from flask_jwt_extended import create_access_token, current_user, jwt_required, get_jwt_identity, create_refresh_token,\
+from flask_jwt_extended import create_access_token, current_user, jwt_required, get_jwt_identity, create_refresh_token, \
     set_access_cookies, unset_access_cookies
 import datetime
 from bbs.extensions import jwt
+from bbs.utils import conf
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
-@auth_bp.route('/login')
+@auth_bp.route('/login', methods=['POST'])
 @check_json
 def login():
     username = request.json.get('username')
@@ -27,26 +28,30 @@ def login():
     if not user:
         return jsonify(
             code=404,
-            msg='用户不存在！'
-        ), 404
+            msg='用户不存在！',
+            success=False
+        )
 
     if user.status.name == '禁用':
         return jsonify(
             code=403,
-            msg='用户已被禁用！'
-        ), 403
+            msg='用户已被禁用！',
+            success=False
+        )
 
     if not user.check_password(password):
         return jsonify(
             code=400,
-            msg='用户名或密码错误！'
-        ), 400
+            msg='用户名或密码错误！',
+            success=False
+        )
 
     if user.role_id != 1:
         return jsonify(
             code=403,
-            msg='非管理员禁止登录！'
-        ), 403
+            msg='非管理员禁止登录！',
+            success=False
+        )
 
     access_token = create_access_token(identity=user, additional_claims={'admin': True})
     response = jsonify(
@@ -56,7 +61,8 @@ def login():
         username=user.username,
         nickname=user.nickname,
         timestamp=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        access_token=access_token
+        access_token=access_token,
+        success=True
     )
     set_access_cookies(response, access_token)
     return response
@@ -73,14 +79,14 @@ def user_lookup_callback(_jwt_header, jwt_data):
     return User.query.filter_by(id=identity).one_or_none()
 
 
-@auth_bp.route('/userinfo')
+@auth_bp.route('/userInfo')
 @jwt_required()
 def user_info():
-
     return jsonify(
         id=current_user.id,
         username=current_user.username,
-        nickname=current_user.nickname
+        nickname=current_user.nickname,
+        avatar=conf.get('frontend_url') + current_user.avatar
     ), 200
 
 
