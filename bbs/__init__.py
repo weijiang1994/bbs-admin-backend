@@ -48,7 +48,7 @@ def create_app(config_name=None):
         :return: 提示信息
         """
         return jsonify(
-            code=4003,
+            code=4004,
             msg='无效的Token!'
         )
 

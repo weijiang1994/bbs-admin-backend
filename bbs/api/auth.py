@@ -86,8 +86,9 @@ def user_info():
         id=current_user.id,
         username=current_user.username,
         nickname=current_user.nickname,
-        avatar=conf.get('frontend_url') + current_user.avatar
-    ), 200
+        avatar=conf.get('frontend_url') + current_user.avatar,
+        code=200
+    )
 
 
 @auth_bp.route('/logout')
