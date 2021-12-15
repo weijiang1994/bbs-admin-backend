@@ -10,6 +10,7 @@
 from flask import request, jsonify
 from bbs.setting import basedir
 import os
+from functools import wraps
 
 
 def track_error(func):
@@ -18,10 +19,13 @@ def track_error(func):
     :param func: decorated function
     :return: result
     """
+    @wraps(func)
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             return jsonify(
                 code=500,
                 msg='服务器内部错误！'
@@ -35,7 +39,7 @@ def check_json(func):
     :param func: decorated function (view function)
     :return: check result
     """
-
+    @wraps(func)
     def wrapper(*args, **kwargs):
         if request.json is None or type(request.json) != dict:
             return jsonify(
