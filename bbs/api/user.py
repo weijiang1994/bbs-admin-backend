@@ -8,33 +8,65 @@
 @Software: PyCharm
 """
 from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required
 from bbs.models import User
-from bbs.decorators import check_json
+from bbs.decorators import check_json, track_error
+from bbs.extensions import db
+
 user_bp = Blueprint('user', __name__, url_prefix='/user')
 
 
-@user_bp.route('/get-user', methods=['GET'])
+@user_bp.route('/list', methods=['GET'])
+@jwt_required()
+@track_error
+def user_list():
+    page = request.args.get('page', type=int, default=1)
+    size = request.args.get('size', type=int, default=20)
+    pagination = User.query.paginate(page=page, per_page=size)
+    users = pagination.items
+    return jsonify(table_render(pagination, users))
+
+
+@user_bp.route('/ban', methods=['POST'])
+@jwt_required()
 @check_json
-def get_user():
-    page = request.json.get('page')
-    limit = request.json.get('limit')
-    keyword = request.json.get('keyword')
-    cate = request.json.get('cate')
-    if cate and keyword:
-        if cate == 'id':
-            pagination = User.query.filter_by(id=keyword).paginate(page=page, per_page=limit)
-        elif cate == 'username':
-            pagination = User.query.filter_by(username=keyword).paginate(page=page, per_page=limit)
-        elif cate == 'email':
-            pagination = User.query.filter_by(email=keyword).paginate(page=page, per_page=limit)
-        else:
-            pagination = User.query.filter_by(nickname=keyword).paginate(page=page, per_page=limit)
-        users = pagination.items
-    else:
-        pagination = User.query.paginate(page=page, per_page=limit)
-        users = pagination.items
-    user_dict = table_render(pagination, users)
-    return jsonify(user_dict)
+def ban():
+    username = request.json.get('username')
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return jsonify(
+            code=404,
+            msg='不存在的用户！',
+            success=False
+        )
+    user.status_id = 2
+    db.session.commit()
+    return jsonify(
+        code=200,
+        msg=f'封禁用户{username}成功！',
+        success=True
+    )
+
+
+@user_bp.route('/unban', methods=['POST'])
+@jwt_required()
+@check_json
+def unban():
+    username = request.json.get('username')
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return jsonify(
+            code=404,
+            msg='不存在的用户！',
+            success=False
+        )
+    user.status_id = 1
+    db.session.commit()
+    return jsonify(
+        code=200,
+        msg=f'解封用户{username}成功！',
+        success=True
+    )
 
 
 @user_bp.route('/add-user', methods=['POST'])
@@ -79,7 +111,7 @@ def add_user():
 
 
 def table_render(pagination, users):
-    user_dict = {"code": 200, "msg": "website users", "count": len(users), "total": pagination.total}
+    user_dict = {"code": 200, "msg": "网站用户", "count": len(users), "total": pagination.total}
     data = []
     for user in users:
         s = {'id': user.id,
