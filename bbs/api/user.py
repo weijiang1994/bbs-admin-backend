@@ -16,6 +16,30 @@ from bbs.extensions import db
 user_bp = Blueprint('user', __name__, url_prefix='/user')
 
 
+@user_bp.route('/batch-ban', methods=['POST'])
+@jwt_required()
+@check_json
+@track_error
+def batch_ban():
+    usernames = request.json.get('users')
+    users = User.query.filter(User.username.in_(usernames)).all()
+    disable = 0
+    enable = 0
+    for user in users:
+        if user.status_id == 1:
+            user.status_id = 2
+            disable += 1
+        elif user.status_id == 2:
+            user.status_id = 1
+            enable += 1
+    db.session.commit()
+    return jsonify(
+        code=200,
+        msg=f'操作成功，封禁用户{disable}个，解封用户{enable}个！',
+        success=True
+    )
+
+
 @user_bp.route('/query', methods=['POST'])
 @jwt_required()
 @check_json
