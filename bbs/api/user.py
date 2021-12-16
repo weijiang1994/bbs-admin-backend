@@ -16,6 +16,29 @@ from bbs.extensions import db
 user_bp = Blueprint('user', __name__, url_prefix='/user')
 
 
+@user_bp.route('/query', methods=['POST'])
+@jwt_required()
+@check_json
+@track_error
+def query():
+    category = request.json.get('category')
+    keyword = request.json.get('keyword')
+    if category == 'username':
+        user = User.query.filter(
+            User.username == keyword
+        ).first()
+    else:
+        user = User.query.filter(
+            User.nickname == keyword
+        ).first()
+    if not user:
+        return jsonify(
+            code=404,
+            msg='未找到相关信息！'
+        )
+    return jsonify(table_render(1, [user]))
+
+
 @user_bp.route('/list', methods=['GET'])
 @jwt_required()
 @track_error
@@ -24,7 +47,7 @@ def user_list():
     size = request.args.get('size', type=int, default=20)
     pagination = User.query.paginate(page=page, per_page=size)
     users = pagination.items
-    return jsonify(table_render(pagination, users))
+    return jsonify(table_render(pagination.total, users))
 
 
 @user_bp.route('/ban', methods=['POST'])
@@ -110,8 +133,8 @@ def add_user():
     return jsonify({'tag': tag, 'info': info})
 
 
-def table_render(pagination, users):
-    user_dict = {"code": 200, "msg": "网站用户", "count": len(users), "total": pagination.total}
+def table_render(total, users):
+    user_dict = {"code": 200, "msg": "网站用户", "count": len(users), "total": total}
     data = []
     for user in users:
         s = {'id': user.id,
