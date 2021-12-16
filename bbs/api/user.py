@@ -116,45 +116,20 @@ def unban():
     )
 
 
-@user_bp.route('/add-user', methods=['POST'])
-def add_user():
-    username = request.json.get('username')
-    nickname = request.json.get('nickname')
-    email = request.json.get('email')
-    tag = 0
-    if User.query.filter_by(username=username).first():
-        info = '用户名已存在'
-    elif User.query.filter_by(nickname=nickname).first():
-        info = '昵称已存在'
-    elif User.query.filter_by(email=email).first():
-        info = '邮箱已经被注册'
-    else:
-        password = request.json.get('password')
-        gender = request.json.get('gender')
-        role = request.json.get('role')
-        college = request.json.get('college')
-        user = User(username=username,
-                    nickname=nickname,
-                    email=email,
-                    gender_id=gender,
-                    role_id=role,
-                    status_id=1,
-                    college_id=college)
-        user.generate_avatar()
-        user.set_password(password)
-        db.session.add(user)
-        db.session.commit()
-
-        r = Role.query.filter_by(id=role).first()
-        log = AdminLog(admin_id=current_user.id,
-                       target_id=user.id,
-                       op_id=4,
-                       notes='添加了用户{},角色为{}'.format(user.username, r.name))
-        db.session.add(log)
-        db.session.commit()
-        tag = 1
-        info = '添加用户成功!'
-    return jsonify({'tag': tag, 'info': info})
+@user_bp.route('/edit', methods=['POST'])
+@jwt_required()
+@check_json
+@track_error
+def edit():
+    user = request.json.get('user')
+    User.query.filter_by(id=user.get('id')).update({'gender_id': user.get('gender_id'),
+                                                    'role_id': user.get('role_id')})
+    db.session.commit()
+    return jsonify(
+        code=200,
+        msg='更新用户信息成功！',
+        success=True
+    )
 
 
 def table_render(total, users):
@@ -172,7 +147,10 @@ def table_render(total, users):
              'email': user.email,
              'status': user.status_id,
              'gender': user.gender.name,
-             'college': user.college.name}
+             'college': user.college.name,
+             'role_id': user.role_id,
+             'gender_id': user.gender_id
+             }
         data.append(s)
     user_dict['data'] = data
     return user_dict
