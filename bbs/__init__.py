@@ -12,6 +12,7 @@ from bbs.extensions import db, jwt, cors
 from bbs.setting import DevelopmentConfig, ProductionConfig, basedir
 from bbs.api.user import user_bp
 from bbs.api.auth import auth_bp
+from bbs.api.post import post_bp
 from bbs.models import *
 import logging
 from logging.handlers import RotatingFileHandler
@@ -64,6 +65,7 @@ def register_ext(app: Flask):
 def register_bp(app: Flask):
     app.register_blueprint(user_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(post_bp)
 
 
 def register_log(app: Flask):
