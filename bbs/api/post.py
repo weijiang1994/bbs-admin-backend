@@ -10,9 +10,8 @@
 from flask import Blueprint, request, jsonify
 from bbs.decorators import check_json, track_error
 from flask_jwt_extended import jwt_required
-from bbs.models import Post
+from bbs.models import Post, Notification
 from bbs.extensions import db
-
 
 post_bp = Blueprint('post', __name__, url_prefix='/post')
 
@@ -54,6 +53,86 @@ def review_batch_fail():
     return jsonify(
         code=200,
         msg='审核帖子成功！',
+        success=True
+    )
+
+
+@post_bp.route('/detail/<post_id>', methods=['GET'])
+@jwt_required()
+@track_error
+def post_detail(post_id):
+    post = Post.query.filter_by(id=post_id).first()
+    if not post:
+        return jsonify(
+            code=404,
+            msg='未找到相关的帖子!',
+            success=True
+        )
+
+    return jsonify(
+        code=200,
+        msg='帖子详情获取成功!',
+        success=True,
+        data=dict(
+            title=post.title,
+            author=post.user.username,
+            category=post.cats.name,
+            c_time=str(post.create_time),
+            content=post.content,
+        )
+    )
+
+
+@post_bp.route('/review/pass', methods=['POST'])
+@jwt_required()
+@check_json
+@track_error
+def review_pass():
+    post_id = request.json.get('postId')
+    post = Post.query.filter_by(id=post_id).first()
+    if not post:
+        return jsonify(
+            code=404,
+            msg='未找到相关的帖子!',
+            success=True
+        )
+    post.status_id = 1
+    db.session.commit()
+    return jsonify(
+        code=200,
+        msg='帖子审核成功！',
+        success=True
+    )
+
+
+@post_bp.route('/review/fail', methods=['POST'])
+@jwt_required()
+@check_json
+@track_error
+def review_fail():
+    post_id = request.json.get('postId')
+    reason = request.json.get('reason')
+    post = Post.query.filter_by(id=post_id).first()
+    if not post:
+        return jsonify(
+            code=404,
+            msg='未找到相关的帖子!',
+            success=True
+        )
+    post.status_id = 4
+    ntf = Notification(
+        type=2,
+        target_name='帖子审核',
+        send_user='admin',
+        receive_id=post.user.id,
+        msg=f'<p class="mb-0">新发布的帖子<b>{post.title}</b>审核未通过！</p>'
+            f'<p class="mb-0">未通过原因如下：<b>{reason}</b></p>'
+    )
+    db.session.add(ntf)
+    db.session.commit()
+    return jsonify(
+        code=200,
+        msg='帖子审核成功！',
         success=True
     )
 
