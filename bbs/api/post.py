@@ -10,7 +10,7 @@
 from flask import Blueprint, request, jsonify
 from bbs.decorators import check_json, track_error
 from flask_jwt_extended import jwt_required
-from bbs.models import Post, Notification, User
+from bbs.models import Post, Notification, User, PostCategory
 from bbs.extensions import db
 
 post_bp = Blueprint('post', __name__, url_prefix='/post')
@@ -202,6 +202,18 @@ def batch_unblock():
     )
 
 
+@post_bp.route('/category/list', methods=['GET'])
+@jwt_required()
+@track_error
+def category_list():
+    page = request.args.get('page', 1, type=int)
+    limit = request.args.get('size', 20, type=int)
+    pagination = PostCategory.query.paginate(page=page, per_page=limit)
+    return jsonify(
+        render_category_list(pagination.total, pagination.items, msg='获取帖子类别成功!')
+    )
+
+
 def render_list(total, posts, msg, **kwargs):
     ret = {
         'code': 200,
@@ -224,5 +236,28 @@ def render_list(total, posts, msg, **kwargs):
             'status_id': post.status_id
         }
         data.append(item)
+    ret['data'] = data
+    return ret
+
+
+def render_category_list(total, p_cates, **kwargs):
+    ret = dict(
+        code=200,
+        success=True,
+        **kwargs
+    )
+    data = []
+    for p in p_cates:
+        data.append(
+            dict(
+                id=p.id,
+                name=p.name,
+                topic_id=p.topic_id,
+                c_time=str(p.create_time),
+                desc=p.desc,
+                cate_img=p.cate_img if p.cate_img else '暂无图片',
+                topic=p.p_topic.name if p.topic_id else '暂未归类'
+            )
+        )
     ret['data'] = data
     return ret
