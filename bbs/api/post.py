@@ -10,7 +10,7 @@
 from flask import Blueprint, request, jsonify
 from bbs.decorators import check_json, track_error
 from flask_jwt_extended import jwt_required
-from bbs.models import Post, Notification
+from bbs.models import Post, Notification, User, PostCategory
 from bbs.extensions import db
 
 post_bp = Blueprint('post', __name__, url_prefix='/post')
@@ -137,6 +137,83 @@ def review_fail():
     )
 
 
+@post_bp.route('/list')
+@jwt_required()
+@track_error
+def post_list():
+    page = request.args.get('page', 1, type=int)
+    limit = request.args.get('size', 20, type=int)
+    pagination = Post.query.order_by(Post.create_time.desc()).paginate(page=page, per_page=limit)
+    return jsonify(
+        render_list(pagination.total, pagination.items, '获取帖子列表成功')
+    )
+
+
+@post_bp.route('/search', methods=['POST'])
+@jwt_required()
+@check_json
+@track_error
+def search():
+    keyword = request.json.get('keyword')
+    category = request.json.get('category')
+    if category == 'title':
+        posts = Post.query.filter_by(title=keyword).all()
+    else:
+        posts = Post.query.join(User).filter(User.username == keyword).all()
+    if not posts:
+        return jsonify(
+            code=404,
+            msg='没有查询到相关数据！',
+            success=True
+        )
+
+    return jsonify(
+        render_list(len(posts), posts, '查询成功')
+    )
+
+
+@post_bp.route('/batch-block', methods=['POST'])
+@jwt_required()
+@check_json
+@track_error
+def batch_ban():
+    ids = request.json.get('postIds')
+    Post.query.filter(Post.id.in_(ids), Post.status_id == 1).update({'status_id': 2})
+    db.session.commit()
+    return jsonify(
+        code=200,
+        msg='批量封禁帖子成功！',
+        success=True
+    )
+
+
+@post_bp.route('/batch-unblock', methods=['POST'])
+@jwt_required()
+@check_json
+@track_error
+def batch_unblock():
+    ids = request.json.get('postIds')
+    Post.query.filter(Post.id.in_(ids), Post.status_id == 2).update({'status_id': 1})
+    db.session.commit()
+    return jsonify(
+        code=200,
+        msg='批量解封帖子成功！',
+        success=True
+    )
+
+
+@post_bp.route('/category/list', methods=['GET'])
+@jwt_required()
+@track_error
+def category_list():
+    page = request.args.get('page', 1, type=int)
+    limit = request.args.get('size', 20, type=int)
+    pagination = PostCategory.query.paginate(page=page, per_page=limit)
+    return jsonify(
+        render_category_list(pagination.total, pagination.items, msg='获取帖子类别成功!')
+    )
+
+
 def render_list(total, posts, msg, **kwargs):
     ret = {
         'code': 200,
@@ -155,7 +232,32 @@ def render_list(total, posts, msg, **kwargs):
             'c_time': str(post.create_time),
             'anonymous': post.is_anonymous,
             'category': post.cats.name,
+            'status': post.status.name,
+            'status_id': post.status_id
         }
         data.append(item)
+    ret['data'] = data
+    return ret
+
+
+def render_category_list(total, p_cates, **kwargs):
+    ret = dict(
+        code=200,
+        success=True,
+        **kwargs
+    )
+    data = []
+    for p in p_cates:
+        data.append(
+            dict(
+                id=p.id,
+                name=p.name,
+                topic_id=p.topic_id,
+                c_time=str(p.create_time),
+                desc=p.desc,
+                cate_img=p.cate_img if p.cate_img else '暂无图片',
+                topic=p.p_topic.name if p.topic_id else '暂未归类'
+            )
+        )
     ret['data'] = data
     return ret
