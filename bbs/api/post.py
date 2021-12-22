@@ -10,7 +10,7 @@
 from flask import Blueprint, request, jsonify
 from bbs.decorators import check_json, track_error
 from flask_jwt_extended import jwt_required
-from bbs.models import Post, Notification, User, PostCategory
+from bbs.models import Post, Notification, User, PostCategory, PostTopic
 from bbs.extensions import db
 
 post_bp = Blueprint('post', __name__, url_prefix='/post')
@@ -214,6 +214,65 @@ def category_list():
     )
 
 
+@post_bp.route('/topic/list', methods=['GET'])
+@jwt_required()
+@track_error
+def topic_list():
+    page = request.args.get('page', type=int, default=1)
+    limit = request.args.get('size', type=int, default=20)
+    pagination = PostTopic.query.order_by(PostTopic.c_time.desc()).paginate(page=page, per_page=limit)
+    return jsonify(
+        render_topic_list(pagination.total, pagination.items)
+    )
+
+
+@post_bp.route('/topic/new', methods=['POST'])
+@jwt_required()
+@check_json
+@track_error
+def add_topic():
+    name = request.json.get('name')
+    if PostTopic.query.filter_by(name=name).first():
+        return jsonify(
+            code=403,
+            msg='已存在相同名称的主题！',
+            success=False
+        )
+    pt = PostTopic(name=name)
+    db.session.add(pt)
+    db.session.commit()
+    return jsonify(
+        code=200,
+        msg='添加帖子主题成功!',
+        success=True
+    )
+
+
+@post_bp.route('/topic/edit', methods=['POST'])
+@jwt_required()
+@check_json
+@track_error
+def edit_topic():
+    topic_id = request.json.get('id')
+    name = request.json.get('name')
+    origin_topic = PostTopic.query.filter_by(id=topic_id).first()
+    new_name_topic = PostTopic.query.filter_by(name=name).first()
+    if new_name_topic and new_name_topic.id != origin_topic.id:
+        return jsonify(
+            code=403,
+            msg='当前主题名称已经存在！',
+            success=False
+        )
+
+    origin_topic.name = name
+    db.session.commit()
+    return jsonify(
+        code=200,
+        msg='编辑主题信息成功!',
+        success=True
+    )
+
+
 def render_list(total, posts, msg, **kwargs):
     ret = {
         'code': 200,
@@ -257,6 +316,39 @@ def render_category_list(total, p_cates, **kwargs):
                 desc=p.desc,
                 cate_img=p.cate_img if p.cate_img else '暂无图片',
                 topic=p.p_topic.name if p.topic_id else '暂未归类'
+            )
+        )
+    ret['data'] = data
+    return ret
+
+
+def render_topic_list(total, topics, **kwargs):
+    ret = dict(
+        code=200,
+        success=True,
+        total=total,
+        **kwargs
+    )
+    data = []
+    for topic in topics:
+        children = []
+        if topic.post_cate:
+            for cate in topic.post_cate:
+                children.append(
+                    dict(
+                        id=cate.id,
+                        name=cate.name,
+                        desc=cate.desc,
+                        c_time=str(cate.create_time)
+                    )
+                )
+
+        data.append(
+            dict(
+                id=topic.id,
+                name=topic.name,
+                c_time=str(topic.c_time),
+                children=children
             )
         )
     ret['data'] = data
