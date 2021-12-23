@@ -248,6 +248,25 @@ def add_topic():
     )
 
 
+@post_bp.route('/topic/search', methods=['POST'])
+@jwt_required()
+@check_json
+@track_error
+def search_topic():
+    name = request.json.get('name')
+    pt = PostTopic.query.filter_by(name=name).all()
+    if not pt:
+        return jsonify(
+            code=404,
+            msg='未找到相关信息！',
+            success=True
+        )
+
+    return jsonify(
+        render_topic_list(1, pt)
+    )
+
+
 @post_bp.route('/topic/edit', methods=['POST'])
 @jwt_required()
 @check_json
