@@ -12,6 +12,7 @@ from bbs.decorators import check_json, track_error
 from flask_jwt_extended import jwt_required
 from bbs.models import Post, Notification, User, PostCategory, PostTopic
 from bbs.extensions import db
+from bbs.constants import NOT_FOUND
 
 post_bp = Blueprint('post', __name__, url_prefix='/post')
 
@@ -214,6 +215,63 @@ def category_list():
     )
 
 
+@post_bp.route('/category/search', methods=['POST'])
+@jwt_required()
+@check_json
+@track_error
+def search_category():
+    name = request.json.get('name')
+    pc = PostCategory.query.filter_by(name=name).all()
+    if not pc:
+        return jsonify(
+            NOT_FOUND
+        )
+    return jsonify(
+        render_category_list(1, pc)
+    )
+
+
+@post_bp.route('/category/detail', methods=['POST'])
+@jwt_required()
+@check_json
+@track_error
+def category_detail():
+    category_id = request.json.get('id')
+    pc = PostCategory.query.filter_by(id=category_id).first()
+    if not pc:
+        return jsonify(
+            NOT_FOUND
+        )
+    return jsonify(
+        code=200,
+        msg='帖子类别详细信息!',
+        success=True,
+        data=dict(
+            name=pc.name,
+            topic_id=pc.topic_id,
+            desc=pc.desc,
+            cate_img=pc.cate_img,
+            create_time=str(pc.create_time)
+        )
+    )
+
+
+@post_bp.route('/category/edit', methods=['POST'])
+@jwt_required()
+@check_json
+@track_error
+def edit_category():
+    data = request.json.get('data')
+    pt_id = request.json.get('id')
+    PostCategory.query.filter_by(id=pt_id).update(data)
+    db.session.commit()
+    return jsonify(
+        code=200,
+        msg='类别信息更新成功!',
+        success=True
+    )
+
+
 @post_bp.route('/topic/list', methods=['GET'])
 @jwt_required()
 @track_error
@@ -223,6 +281,27 @@ def topic_list():
     pagination = PostTopic.query.order_by(PostTopic.c_time.desc()).paginate(page=page, per_page=limit)
     return jsonify(
         render_topic_list(pagination.total, pagination.items)
+    )
+
+
+@post_bp.route('/topic/all', methods=['GET'])
+@jwt_required()
+@track_error
+def all_topic():
+    topics = PostTopic.query.all()
+    data = []
+    for topic in topics:
+        data.append(
+            dict(
+                id=topic.id,
+                name=topic.name
+            )
+        )
+    return jsonify(
+        code=200,
+        msg='所有主题',
+        success=True,
+        data=data
     )
 
 
@@ -245,6 +324,25 @@ def add_topic():
         code=200,
         msg='添加帖子主题成功!',
         success=True
+    )
+
+
+@post_bp.route('/topic/search', methods=['POST'])
+@jwt_required()
+@check_json
+@track_error
+def search_topic():
+    name = request.json.get('name')
+    pt = PostTopic.query.filter_by(name=name).all()
+    if not pt:
+        return jsonify(
+            code=404,
+            msg='未找到相关信息！',
+            success=True
+        )
+
+    return jsonify(
+        render_topic_list(1, pt)
     )
 
 
