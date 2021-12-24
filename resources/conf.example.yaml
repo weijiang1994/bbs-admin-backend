@@ -1,2 +1,2 @@
-frontend_url: http://127.0.0.1:5000
-category_path: /data/bbs/cate-img
+frontend_url:  # 前台页面地址
+category_path: # 帖子类别示例图片存储地址

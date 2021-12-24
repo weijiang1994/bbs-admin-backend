@@ -13,6 +13,8 @@ from flask_jwt_extended import jwt_required
 from bbs.models import Post, Notification, User, PostCategory, PostTopic
 from bbs.extensions import db
 from bbs.constants import NOT_FOUND
+from bbs.utils import conf
+import os
 
 post_bp = Blueprint('post', __name__, url_prefix='/post')
 
@@ -256,6 +258,33 @@ def category_detail():
     )
 
 
+@post_bp.route('/category/new', methods=['POST'])
+@jwt_required()
+@check_json
+@track_error
+def new_category():
+    import shutil
+    data = request.json.get('data')
+    data.pop('create_time')
+    filename = request.json.get('filename')
+    root = conf.get('category_path')
+    path = os.path.join(root, filename)
+
+    pc = PostCategory(**data)
+    db.session.add(pc)
+    db.session.commit()
+    new_path = os.path.join(root, str(pc.id))
+    os.mkdir(new_path)
+    shutil.move(os.path.join(root, filename), os.path.join(new_path, filename))
+    pc.cate_img = f'/normal/category-image/{pc.id}/{filename}'
+    db.session.commit()
+    return jsonify(
+        code=200,
+        msg='新增帖子类别成功!',
+        success=True
+    )
+
+
 @post_bp.route('/category/edit', methods=['POST'])
 @jwt_required()
 @check_json
@@ -401,6 +430,7 @@ def render_category_list(total, p_cates, **kwargs):
     ret = dict(
         code=200,
         success=True,
+        total=total,
         **kwargs
     )
     data = []
@@ -412,7 +442,7 @@ def render_category_list(total, p_cates, **kwargs):
                 topic_id=p.topic_id,
                 c_time=str(p.create_time),
                 desc=p.desc,
-                cate_img=p.cate_img if p.cate_img else '暂无图片',
+                cate_img=p.cate_img,
                 topic=p.p_topic.name if p.topic_id else '暂未归类'
             )
         )
