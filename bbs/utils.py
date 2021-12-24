@@ -13,6 +13,7 @@ from bbs.setting import basedir
 import os
 import datetime
 import yaml
+import uuid
 
 yaml_file = basedir + '/resources/conf.yaml'
 fs = open(yaml_file, encoding='utf8')
@@ -49,3 +50,13 @@ class LogUtil:
         logger.addHandler(file_handler)
         logger.setLevel(logging.DEBUG)
         return logger
+
+
+def get_uuid(drop=True):
+    return str(uuid.uuid1()).replace('-', '') if drop else str(uuid.uuid1())
+
+
+def write_bs64_img(save_path, data):
+    import base64
+    with open(save_path, 'wb') as f:
+        f.write(base64.b64decode(data))
