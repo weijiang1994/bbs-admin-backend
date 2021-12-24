@@ -28,9 +28,12 @@ def upload_img():
     bs64 = file.split(',')
     suffix = bs64[0].split('/')[-1].split(';')[0]
     data = bs64[-1]
-    save_root = os.path.join(conf.get('category_path'), category_id)
-    if not os.path.exists(save_root):
-        os.mkdir(save_root)
+    if category_id != '':
+        save_root = os.path.join(conf.get('category_path'), category_id)
+        if not os.path.exists(save_root):
+            os.mkdir(save_root)
+    else:
+        save_root = os.path.join(conf.get('category_path'))
     image_name = get_uuid() + '.' + suffix
     write_bs64_img(os.path.join(save_root, image_name), data)
 
@@ -38,7 +41,9 @@ def upload_img():
         code=200,
         msg='上传成功!',
         success=True,
-        img_url=url_for('.get_category_image', cate_id=category_id, image_name=image_name)
+        filename=image_name,
+        img_url=url_for('.get_category_image', cate_id=category_id, image_name=image_name) if category_id else
+        url_for('.temp_image', image_name=image_name)
     )
 
 
@@ -47,4 +52,12 @@ def upload_img():
 def get_category_image(cate_id, image_name):
     filename = image_name
     path = os.path.join(conf.get("category_path"), cate_id)
+    return send_from_directory(path, filename)
+
+
+@normal_bp.route('/temp-image/<image_name>')
+@track_error
+def temp_image(image_name):
+    filename = image_name
+    path = conf.get('category_path')
     return send_from_directory(path, filename)
