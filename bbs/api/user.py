@@ -8,10 +8,11 @@
 @Software: PyCharm
 """
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required
-from bbs.models import User
+from flask_jwt_extended import jwt_required, current_user
+from bbs.models import User, AdminLog
 from bbs.decorators import check_json, track_error
 from bbs.extensions import db
+from bbs.utils import add_admin_log
 
 user_bp = Blueprint('user', __name__, url_prefix='/user')
 
@@ -32,6 +33,11 @@ def batch_ban():
         elif user.status_id == 2:
             user.status_id = 1
             enable += 1
+    al = AdminLog(
+        admin_id=current_user.id,
+        notes='进行了批量封禁/解封操作!'
+    )
+    db.session.add(al)
     db.session.commit()
     return jsonify(
         code=200,
@@ -87,7 +93,13 @@ def ban():
             success=False
         )
     user.status_id = 2
+    al = AdminLog(
+        admin_id=current_user.id,
+        notes=f'封禁了用户{user.username}'
+    )
+    db.session.add(al)
     db.session.commit()
+
     return jsonify(
         code=200,
         msg=f'封禁用户{username}成功！',
@@ -108,6 +120,11 @@ def unban():
             success=False
         )
     user.status_id = 1
+    al = AdminLog(
+        admin_id=current_user.id,
+        notes=f'解封了用户{user.username}'
+    )
+    db.session.add(al)
     db.session.commit()
     return jsonify(
         code=200,
@@ -122,8 +139,15 @@ def unban():
 @track_error
 def edit():
     user = request.json.get('user')
-    User.query.filter_by(id=user.get('id')).update({'gender_id': user.get('gender_id'),
-                                                    'role_id': user.get('role_id')})
+    exist_user = User.query.filter_by(id=user.get('id')).first()
+
+    exist_user.gender_id = user.get('gender_id')
+    exist_user.role_id = user.get('role_id')
+    al = AdminLog(
+        admin_id=current_user.id,
+        notes=f'编辑了用户{exist_user.username}信息'
+    )
+    db.session.add(al)
     db.session.commit()
     return jsonify(
         code=200,
