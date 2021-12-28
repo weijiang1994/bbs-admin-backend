@@ -12,7 +12,6 @@ from flask_jwt_extended import jwt_required, current_user
 from bbs.models import User, AdminLog
 from bbs.decorators import check_json, track_error
 from bbs.extensions import db
-from bbs.utils import add_admin_log
 
 user_bp = Blueprint('user', __name__, url_prefix='/user')
 

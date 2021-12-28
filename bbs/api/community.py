@@ -10,7 +10,8 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
 from bbs.decorators import check_json, track_error
-from bbs.models import User, Post, Comments
+from bbs.models import User, Post, Comments, AdminLog
+from bbs.utils import hardware_monitor
 
 community_bp = Blueprint('community', __name__, url_prefix='/community')
 
@@ -69,6 +70,42 @@ def register_info():
             title='注册统计',
             count=count,
             rooter='今日注册用户总数'
+        )
+    )
+
+
+@community_bp.route('/latest/admin-log', methods=['GET'])
+@jwt_required()
+@track_error
+def latest_log():
+    logs = AdminLog.query.order_by(AdminLog.timestamps.desc()).limit(8)
+    ret = dict(
+        code=200,
+        msg='获取最近管理员操作记录成功!',
+        success=True
+    )
+    data = []
+    for log in logs:
+        data.append(
+            dict(
+                content=log.admin_user.username + log.notes,
+                timestamp=str(log.timestamps)
+            )
+        )
+    ret['data'] = data
+    return jsonify(ret)
+
+
+@community_bp.route('/server-status', methods=['GET'])
+@jwt_required()
+@track_error
+def server_status():
+    cpu, mem = hardware_monitor()
+    return jsonify(
+        code=200,
+        data=dict(
+            cpu=cpu,
+            mem=mem
         )
     )
 

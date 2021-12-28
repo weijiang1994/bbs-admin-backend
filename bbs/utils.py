@@ -14,6 +14,7 @@ import os
 import datetime
 import yaml
 import uuid
+import psutil
 
 yaml_file = basedir + '/resources/conf.yaml'
 fs = open(yaml_file, encoding='utf8')
@@ -60,3 +61,9 @@ def write_bs64_img(save_path, data):
     import base64
     with open(save_path, 'wb') as f:
         f.write(base64.b64decode(data))
+
+
+def hardware_monitor():
+    cpu_per = psutil.cpu_percent()
+    me_per = psutil.virtual_memory().percent
+    return cpu_per, me_per
