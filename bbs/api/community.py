@@ -10,8 +10,9 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
 from bbs.decorators import check_json, track_error
-from bbs.models import User, Post, Comments, AdminLog
-from bbs.utils import hardware_monitor
+from bbs.models import User, Post, Comments, AdminLog, PostReport
+from bbs.utils import hardware_monitor, conf
+import os
 
 community_bp = Blueprint('community', __name__, url_prefix='/community')
 
@@ -108,6 +109,47 @@ def server_status():
             mem=mem
         )
     )
+
+
+@community_bp.route('/report/unread', methods=['GET'])
+@jwt_required()
+@track_error
+def report_unread():
+    page = request.args.get('page', default=1, type=int)
+    limit = request.args.get('size', default=1, type=int)
+    prs = PostReport.query.filter_by(flag=0).paginate(page=page, per_page=limit)
+    return jsonify(render_report_info(prs.items, prs.total))
+
+
+@community_bp.route('/report/read', methods=['GET'])
+@jwt_required()
+@track_error
+def report_read():
+    page = request.args.get('page', default=1, type=int)
+    limit = request.args.get('size', default=1, type=int)
+    prs = PostReport.query.filter_by(flag=1).paginate(page=page, per_page=limit)
+    return jsonify(render_report_info(prs.items, prs.total))
+
+
+def render_report_info(prs, total, **kwargs):
+    post_base_url = conf.get('frontend_url') + conf.get('post_base_url')
+    ret = dict(
+        code=200,
+        msg='获取举报信息成功!',
+        success=True,
+        total=total
+    )
+    data = []
+    for pr in prs:
+        data.append(dict(
+            post_title=pr.post.title,
+            post_url=os.path.join(post_base_url, str(pr.id)),
+            report_body=pr.rep_content,
+            report_tag=pr.report_cate.name,
+            c_time=str(pr.timestamps)
+        ))
+    ret['data'] = data
+    return ret
 
 
 def render_community_info(title, count, rooter):
