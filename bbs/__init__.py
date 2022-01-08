@@ -16,6 +16,7 @@ from bbs.api.post import post_bp
 from bbs.api.normal import normal_bp
 from bbs.api.community import community_bp
 from bbs.api.comment import comment_bp
+from bbs.api.statistics import statistics_bp
 from bbs.models import *
 import logging
 from logging.handlers import RotatingFileHandler
@@ -72,6 +73,7 @@ def register_bp(app: Flask):
     app.register_blueprint(normal_bp)
     app.register_blueprint(community_bp)
     app.register_blueprint(comment_bp)
+    app.register_blueprint(statistics_bp)
 
 
 def register_log(app: Flask):
