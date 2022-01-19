@@ -13,11 +13,54 @@ from bbs.decorators import check_json, track_error
 import requests
 from bbs.utils import conf
 import urllib.parse
+from bbs.models import VisitStatistic, CommentStatistic, PostStatistic, SearchStatistic
+import datetime
 
 statistics_bp = Blueprint('statistics', __name__, url_prefix='/statistics')
 baidu_base_url = 'https://openapi.baidu.com/rest/2.0/tongji/report/getData'
 access_token = conf.get('baidu-statistics').get('access-token')
 site_id = conf.get('baidu-statistics').get('site-id')
+
+
+def render_traffic(key, datas):
+    data = []
+    for d in datas:
+        data.append(d.times)
+    return dict(
+        name=key,
+        type='line',
+        stack='总量',
+        data=data
+    )
+
+
+@statistics_bp.route('/index', methods=['GET'])
+def statistic():
+    keys = ['访问', '评论', '发帖', '搜索']
+    date_range = request.args.get('dateRange', default='week', type=str)
+    today = datetime.date.today()
+    if date_range == 'week':
+        start_date = today - datetime.timedelta(days=7)
+    elif date_range == 'half':
+        start_date = today - datetime.timedelta(days=15)
+    else:
+        start_date = today - datetime.timedelta(days=30)
+    vs = VisitStatistic.query.filter(VisitStatistic.day > start_date).all()
+    cs = CommentStatistic.query.filter(CommentStatistic.day > start_date).all()
+    ps = PostStatistic.query.filter(PostStatistic.day > start_date).all()
+    ss = SearchStatistic.query.filter(SearchStatistic.day > start_date).all()
+    series = []
+    dates = []
+    for idx, st in enumerate([vs, cs, ps, ss]):
+        series.append(render_traffic(keys[idx], st))
+    for v in vs:
+        dates.append(str(v.day))
+    return dict(
+        code=200,
+        success=True,
+        series=series,
+        dates=dates
+    )
 
 
 @statistics_bp.route('/district', methods=['POST'])
