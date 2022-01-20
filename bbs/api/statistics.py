@@ -30,7 +30,8 @@ def render_traffic(key, datas):
         name=key,
         type='line',
         stack='总量',
-        data=data
+        data=data,
+        areaStyle={'normal': {}},
     )
 
 
@@ -45,10 +46,10 @@ def statistic():
         start_date = today - datetime.timedelta(days=15)
     else:
         start_date = today - datetime.timedelta(days=30)
-    vs = VisitStatistic.query.filter(VisitStatistic.day > start_date).all()
-    cs = CommentStatistic.query.filter(CommentStatistic.day > start_date).all()
-    ps = PostStatistic.query.filter(PostStatistic.day > start_date).all()
-    ss = SearchStatistic.query.filter(SearchStatistic.day > start_date).all()
+    vs = VisitStatistic.query.filter(VisitStatistic.day > start_date).order_by(VisitStatistic.day).all()
+    cs = CommentStatistic.query.filter(CommentStatistic.day > start_date).order_by(CommentStatistic.day).all()
+    ps = PostStatistic.query.filter(PostStatistic.day > start_date).order_by(PostStatistic.day).all()
+    ss = SearchStatistic.query.filter(SearchStatistic.day > start_date).order_by(SearchStatistic.day).all()
     series = []
     dates = []
     for idx, st in enumerate([vs, cs, ps, ss]):
