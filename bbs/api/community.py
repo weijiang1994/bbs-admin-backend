@@ -143,7 +143,7 @@ def render_report_info(prs, total, **kwargs):
     for pr in prs:
         data.append(dict(
             post_title=pr.post.title,
-            post_url=os.path.join(post_base_url, str(pr.id)),
+            post_url=os.path.join(post_base_url, str(pr.post_id)),
             report_body=pr.rep_content,
             report_tag=pr.report_cate.name,
             c_time=str(pr.timestamps)
