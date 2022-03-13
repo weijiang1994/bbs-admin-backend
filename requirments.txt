@@ -20,7 +20,6 @@ Jinja2==3.0.3
 Mako==1.1.6
 MarkupSafe==2.0.1
 Pillow==8.4.0
-pkg_resources==0.0.0
 psutil==5.8.0
 pycparser==2.21
 PyJWT==2.3.0
