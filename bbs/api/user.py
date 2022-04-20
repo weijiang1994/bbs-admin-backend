@@ -74,7 +74,7 @@ def query():
 def user_list():
     page = request.args.get('page', type=int, default=1)
     size = request.args.get('size', type=int, default=20)
-    pagination = User.query.paginate(page=page, per_page=size)
+    pagination = User.query.order_by(User.create_time.desc()).paginate(page=page, per_page=size)
     users = pagination.items
     return jsonify(table_render(pagination.total, users))
 
