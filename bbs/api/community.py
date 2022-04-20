@@ -11,10 +11,25 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
 from bbs.decorators import check_json, track_error
 from bbs.models import User, Post, Comments, AdminLog, PostReport
-from bbs.utils import hardware_monitor, conf
+from bbs.utils import hardware_monitor, conf, Config
 import os
 
 community_bp = Blueprint('community', __name__, url_prefix='/community')
+
+
+@community_bp.route('/configuration')
+@jwt_required()
+@track_error
+def get_configuration():
+    conf = Config()
+    conf.path = conf.read(['front_config_path'])
+    conf.open()
+    return jsonify(
+        data=conf.yaml,
+        code=200,
+        msg='获取社区配置信息成功!',
+        success=True
+    )
 
 
 @community_bp.route('/user/info', methods=['GET'])

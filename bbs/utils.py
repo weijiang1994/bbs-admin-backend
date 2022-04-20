@@ -19,6 +19,41 @@ import psutil
 yaml_file = basedir + '/resources/conf.yaml'
 fs = open(yaml_file, encoding='utf8')
 conf = yaml.load(fs, Loader=yaml.FullLoader)
+config_path = os.path.join(basedir, 'resources/conf.yaml')
+
+
+class Config(object):
+    def __init__(self, path=config_path):
+        """
+        constructor
+        @param path: path of configure file that you need to read or write
+        """
+        self.path = path
+        self.yaml = None
+        self.open()
+        self.value = None
+
+    def open(self):
+        with open(self.path, encoding='utf8') as f:
+            self.yaml = yaml.load(f, Loader=yaml.FullLoader)
+
+    def read(self, keys):
+        try:
+            if isinstance(keys, str):
+                return self.yaml.get(keys)
+            if isinstance(keys, list):
+                for key in keys:
+                    self.yaml = self.yaml.get(key)
+                value = self.yaml
+                self.open()
+                return value
+            raise Exception('Error key type')
+        except Exception as e:
+            raise e
+
+    def write(self, data):
+        with open(self.path, 'w', encoding='utf8') as f:
+            self.yaml.dump(data, f)
 
 
 def singleton(cls):

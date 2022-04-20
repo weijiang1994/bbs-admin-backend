@@ -27,5 +27,5 @@ DATABASE_PORT=3306
 ```
 Run serve with below command
 ```shell
-flask run
+flask run --port 8008
 ```
